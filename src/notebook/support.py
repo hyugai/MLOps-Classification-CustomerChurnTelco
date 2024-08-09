@@ -148,7 +148,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _get_assigned_transformers(self):
+    def _get_assigned_transformers(self) -> list:
         if len(self.materials['num_idxes']) == 0:
             return self.num_pro
         elif len(self.materials['cat_idxes']) == 0:
