@@ -122,10 +122,9 @@ def dump_model(model, path: str) -> None:
 class FSBaseTransformer(BaseEstimator, TransformerMixin):
     ##
     def __init__(self, transformers: dict) -> None:
-        materials = {
+        self.materials = {
             'transformers': transformers
         }
-        self.materials = materials
 
     ##
     def check_ndim(self, X: np.ndarray) -> tuple[np.ndarray, int | float]:
@@ -137,7 +136,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
     ##
     def detect_category(self, X: np.ndarray):
-        self.X_to_fit_, num_iters = self.check_ndim(X)
+        self.materials['X_to_fit_'], num_iters = self.check_ndim(X)
         ###
         self.materials['num_idxes'], self.materials['cat_idxes'] = [], []
         ## 
@@ -153,11 +152,11 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
     ##
     def _get_assigned_transformers(self) -> list:
         if len(self.materials['num_idxes']) == 0:
-            return self.num_pro
+            return self.impute_pro + self.num_pro
         elif len(self.materials['cat_idxes']) == 0:
-            return self.cat_pro
+            return self.impute_pro + self.cat_pro 
         else:
-            return self.num_pro + self.cat_pro
+            return self.impute_pro + self.num_pro + self.cat_pro
         
     ##
     def fit(self, X: np.ndarray, y=None):
@@ -176,10 +175,20 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 # 
 """
 This class will take care of columns having missing values with an imputer.
+    And also need to define numeric and categorical processing.
 """
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         self.detect_category(X)
+        ###
+        impute_idxes = []
+        for i in self.num_idxes:
+            if np.isnan(self.X_to_fit_[:, i]).sum() != 0:
+                impute_idxes.append(i)
+        ###
+        self.impute_pro = [('i', self.materials['transformers']['imputer'], impute_idxes)]
+        self.cat_pro = [('e', self.materials['transformers']['onehot_encoder'], self.materials['cat_idxes'])]
+        self.num_pro = [('num_trans', self.materials['transformers']['num_transformer'], self.materials['num_idxes'])]
 
         super().fit(X)
 
