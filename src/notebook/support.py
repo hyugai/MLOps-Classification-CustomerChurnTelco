@@ -17,8 +17,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import StandardScaler, PowerTransformer, QuantileTransformer
 
 # imputation
-from sklearn.impute import SimpleImputer, KNNImputer, IterativeImputer
-from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import SimpleImputer, KNNImputer
 
 # compose
 from sklearn.compose import ColumnTransformer
@@ -121,22 +120,22 @@ def dump_model(model, path: str) -> None:
         pickle.dump(obj=model, file=output)
 
 # UDC: base customized transformer for sequatial feature selection task
-class SFSBaseTransformer(BaseEstimator, TransformerMixin):
+class FSBaseTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, transformers: dict) -> None:
         materials = {
             'transformers': transformers
         }
         self.materials = materials
 
-    def _check_ndim(self, X: np.ndarray):
+    def check_ndim(self, X: np.ndarray) -> tuple[np.ndarray, int | float]:
         ndim = X.ndim
         if ndim == 2:
             return X, X.shape[1]
         else:
             return X.reshape(-1, 1), 1
 
-    def _detect_category(self, X: np.ndarray):
-        X, num_iters = self._check_ndim(X)
+    def detect_category(self, X: np.ndarray):
+        self.X_to_fit_, num_iters = self.check_ndim(X)
         ##
         self.materials['num_idxes'], self.materials['cat_idxes'] = [], []
         ## 
@@ -146,3 +145,33 @@ class SFSBaseTransformer(BaseEstimator, TransformerMixin):
                 self.materials['num_idxes'].append(i)
             except:
                 self.materials['cat_idxes'].append(i)
+
+        return self
+
+    def _get_assigned_transformers(self):
+        if len(self.materials['num_idxes']) == 0:
+            return self.num_pro
+        elif len(self.materials['cat_idxes']) == 0:
+            return self.cat_pro
+        else:
+            return self.num_pro + self.cat_pro
+        
+    def fit(self, X: np.ndarray, y=None):
+        assigned_transformers = self._get_assigned_transformers()
+        self.ct = ColumnTransformer(assigned_transformers, remainder='passthrough')
+        self.ct.fit(self.X_to_fit_)
+
+        return self
+    
+    def transform(self, X: np.ndarray, y=None):
+        X, _ = self.check_ndim(X)
+
+        return self.ct.transform(X)
+
+class SFS(FSBaseTransformer):
+    def fit(self, X: np.ndarray, y=None):
+        self.detect_category(X)
+
+        super().fit(X)
+
+        return self
