@@ -121,12 +121,14 @@ def dump_model(model, path: str) -> None:
 
 # UDC: base customized transformer for sequatial feature selection task
 class FSBaseTransformer(BaseEstimator, TransformerMixin):
+    ##
     def __init__(self, transformers: dict) -> None:
         materials = {
             'transformers': transformers
         }
         self.materials = materials
 
+    ##
     def check_ndim(self, X: np.ndarray) -> tuple[np.ndarray, int | float]:
         ndim = X.ndim
         if ndim == 2:
@@ -134,9 +136,10 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
         else:
             return X.reshape(-1, 1), 1
 
+    ##
     def detect_category(self, X: np.ndarray):
         self.X_to_fit_, num_iters = self.check_ndim(X)
-        ##
+        ###
         self.materials['num_idxes'], self.materials['cat_idxes'] = [], []
         ## 
         for i in range(num_iters):
@@ -148,6 +151,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
+    ##
     def _get_assigned_transformers(self) -> list:
         if len(self.materials['num_idxes']) == 0:
             return self.num_pro
@@ -156,6 +160,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
         else:
             return self.num_pro + self.cat_pro
         
+    ##
     def fit(self, X: np.ndarray, y=None):
         assigned_transformers = self._get_assigned_transformers()
         self.ct = ColumnTransformer(assigned_transformers, remainder='passthrough')
@@ -163,6 +168,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
         return self
     
+    ##
     def transform(self, X: np.ndarray, y=None):
         X, _ = self.check_ndim(X)
 
