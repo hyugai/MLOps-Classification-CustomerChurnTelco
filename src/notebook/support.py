@@ -57,8 +57,7 @@ def prepare_data_to_train(path: str) -> dict:
     le = LabelEncoder()
     X, y = arr[:, :-1], le.fit_transform(arr[:, -1])
     ##
-    materials['X_train'], materials['X_test'], materials['y_train'], materials['y_test'] = train_test_split(X, y, 
-                                                                                                            test_size=0.3, stratify=y, random_state=7)
+    materials['X_train'], materials['X_test'], materials['y_train'], materials['y_test'] = train_test_split(X, y, test_size=0.3, stratify=y, random_state=7)
     
     return materials
 
@@ -174,6 +173,10 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
         return self.ct.transform(X)
 
+# 
+"""
+This class will take care of columns having missing values with an imputer.
+"""
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         self.detect_category(X)
