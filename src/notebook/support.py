@@ -185,3 +185,19 @@ class SFS(FSBaseTransformer):
         self.assigned_transformers = self.get_assigned_transformers(idxes)
 
         super().fit(X)
+
+#
+class Node():
+    def __init__(self, name: str, model) -> None:
+        self.name = name
+        self.model = model
+        self.data: dict = None
+        self.next: Node = None
+    ##
+    def get_output(self, condition_test):
+        passed, failed = condition_test()
+        passed = [(self.name, self.model, passed)]
+        ###
+        self.next.data['failed'] = failed
+
+        return passed
