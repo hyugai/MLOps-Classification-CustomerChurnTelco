@@ -45,6 +45,10 @@ from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
 from sklearn.ensemble import StackingClassifier
 
+# mlflow 
+import mlflow
+from mlflow.models import infer_signature, infer_pip_requirements
+
 # others
 import pickle
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -122,10 +126,9 @@ def dump_model(model, path: str) -> None:
 class FSBaseTransformer(BaseEstimator, TransformerMixin):
     ##
     def __init__(self, transformers: dict) -> None:
-        self.materials = {
-            'transformers': transformers
-        }
+        self.transformers = transformers
 
+        return None
     ##
     def check_ndim(self, X: np.ndarray) -> tuple[np.ndarray, int | float]:
         ndim = X.ndim
@@ -133,39 +136,34 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
             return X, X.shape[1]
         else:
             return X.reshape(-1, 1), 1
-
     ##
-    def detect_category(self, X: np.ndarray):
-        self.materials['X_to_fit_'], num_iters = self.check_ndim(X)
+    def detect_category(self, X: np.ndarray) -> tuple[np.ndarray, dict]:
+        X, num_iters = self.check_ndim(X)
         ###
-        self.materials['num_idxes'], self.materials['cat_idxes'] = [], []
-        ## 
+        idxes = dict(num=[], cat=[])
+        ### 
         for i in range(num_iters):
             try:
-                X[0, i].astype(float)
-                self.materials['num_idxes'].append(i)
+                float(X[0, i])
+                idxes['num'].append(i)
             except:
-                self.materials['cat_idxes'].append(i)
+                idxes['cat'].append(i)
 
-        return self
-
+        return X, idxes
     ##
-    def _get_assigned_transformers(self) -> list:
-        if len(self.materials['num_idxes']) == 0:
-            return self.impute_pro + self.num_pro
-        elif len(self.materials['cat_idxes']) == 0:
-            return self.impute_pro + self.cat_pro 
+    def get_assigned_transformers(self, idxes: dict) -> list:
+        if len(idxes['cat']) == 0:
+            return self.num_pro
+        elif len(idxes['num']) == 0:
+            return self.cat_pro 
         else:
-            return self.impute_pro + self.num_pro + self.cat_pro
-        
+            return self.num_pro + self.cat_pro
     ##
     def fit(self, X: np.ndarray, y=None):
-        assigned_transformers = self._get_assigned_transformers()
-        self.ct = ColumnTransformer(assigned_transformers, remainder='passthrough')
-        self.ct.fit(self.X_to_fit_)
-
+        self.ct = ColumnTransformer(self.assigned_transformers, remainder='passthrough')\
+            .fit(X)
+        
         return self
-    
     ##
     def transform(self, X: np.ndarray, y=None):
         X, _ = self.check_ndim(X)
@@ -179,17 +177,11 @@ This class will take care of columns having missing values with an imputer.
 """
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
-        self.detect_category(X)
-        ###
-        impute_idxes = []
-        for i in self.num_idxes:
-            if np.isnan(self.X_to_fit_[:, i]).sum() != 0:
-                impute_idxes.append(i)
-        ###
-        self.impute_pro = [('i', self.materials['transformers']['imputer'], impute_idxes)]
-        self.cat_pro = [('e', self.materials['transformers']['onehot_encoder'], self.materials['cat_idxes'])]
-        self.num_pro = [('num_trans', self.materials['transformers']['num_transformer'], self.materials['num_idxes'])]
+        X, idxes = self.detect_category(X)
+
+        self.num_pro = [('num_trans', self.transformers['num_trans'], idxes['num'])]
+        self.cat_pro = [('cat_trans', self.transformers['cat_trans'], idxes['cat'])] 
+
+        self.assigned_transformers = self.get_assigned_transformers(idxes)
 
         super().fit(X)
-
-        return self
