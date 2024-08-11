@@ -191,13 +191,14 @@ class Node():
     def __init__(self, name: str, model) -> None:
         self.name = name
         self.model = model
-        self.data: dict = None
-        self.next: Node = None
+        self.data: dict
+        self.next: Node 
     ##
     def get_output(self, condition_test):
-        passed, failed = condition_test()
+        passed, failed = condition_test(self.data)
         passed = [(self.name, self.model, passed)]
         ###
-        self.next.data['failed'] = failed
-
+        if failed != None:
+            self.next.data['failed'] = failed
+        
         return passed
