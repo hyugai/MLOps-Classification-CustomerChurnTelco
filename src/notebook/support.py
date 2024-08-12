@@ -122,6 +122,23 @@ def dump_model(model, path: str) -> None:
     with open(path, 'wb') as output:
         pickle.dump(obj=model, file=output)
 
+#
+class Node():
+    def __init__(self, name: str, model) -> None:
+        self.name = name
+        self.model = model
+        self.data: dict
+        self.next: Node = None
+    ##
+    def get_output(self, condition_test):
+        passed, failed = condition_test(self.data)
+        passed = [(self.name, self.model, passed)]
+        ###
+        if self.next != None:
+            self.next.data['failed'] = failed
+        
+        return passed
+
 # UDC: base customized transformer for sequatial feature selection task
 class FSBaseTransformer(BaseEstimator, TransformerMixin):
     ##
@@ -175,9 +192,27 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 This class will take care of columns having missing values with an imputer.
     And also need to define numeric and categorical processing.
 """
+def condition_test(data: dict):
+    mask = pd.isnull(data['X'][:, data['idxes']]).sum(axis=0) == 0
+    idxes = np.array(data['idxes'])
+    print(idxes)
+    passed, failed = idxes[mask], idxes[~mask]
+    ##
+    if len(failed) != 0:
+        return passed, failed
+    else:
+        return passed, None
+
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         X, idxes = self.detect_category(X)
+
+        # test
+        test = Node(name='test', model=StandardScaler())
+        test.data = dict(X=X, idxes=idxes['num'])
+        passed = test.get_output(condition_test)
+        print(passed)
+        # test
 
         self.num_pro = [('num_trans', self.transformers['num_trans'], idxes['num'])]
         self.cat_pro = [('cat_trans', self.transformers['cat_trans'], idxes['cat'])] 
@@ -185,20 +220,3 @@ class SFS(FSBaseTransformer):
         self.assigned_transformers = self.get_assigned_transformers(idxes)
 
         super().fit(X)
-
-#
-class Node():
-    def __init__(self, name: str, model) -> None:
-        self.name = name
-        self.model = model
-        self.data: dict
-        self.next: Node 
-    ##
-    def get_output(self, condition_test):
-        passed, failed = condition_test(self.data)
-        passed = [(self.name, self.model, passed)]
-        ###
-        if failed != None:
-            self.next.data['failed'] = failed
-        
-        return passed
