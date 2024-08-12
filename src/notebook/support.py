@@ -16,7 +16,7 @@ from sklearn.metrics import fbeta_score, make_scorer, classification_report
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import StandardScaler, PowerTransformer, QuantileTransformer
 
-# imputation
+# impute
 from sklearn.impute import SimpleImputer, KNNImputer
 
 # compose
@@ -50,7 +50,7 @@ import mlflow
 from mlflow.models import infer_signature, infer_pip_requirements
 
 # others
-import pickle
+import pickle, uuid
 from sklearn.base import BaseEstimator, TransformerMixin
 
 # UDF: prepare data to train model
@@ -89,7 +89,7 @@ def get_seleted_models(names: list) -> list:
         if name in names:
             selected_base_models.append((name, model))
 
-    return base_models
+    return selected_base_models
 
 # UDF: get kfold results
 def get_kfold_results(models: list, X: np.ndarray, y: np.ndarray) -> dict:
@@ -123,6 +123,9 @@ def dump_model(model, path: str) -> None:
         pickle.dump(obj=model, file=output)
 
 #
+"""
+We need an entrance test at each node 
+"""
 class Node():
     def __init__(self, name: str, model) -> None:
         self.name = name
@@ -130,8 +133,8 @@ class Node():
         self.data: dict
         self.next: Node = None
     ##
-    def get_output(self, condition_test):
-        passed, failed = condition_test(self.data)
+    def get_output(self, output_test):
+        passed, failed = output_test(self.data)
         passed = [(self.name, self.model, passed)]
         ###
         if self.next != None:
@@ -192,31 +195,15 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 This class will take care of columns having missing values with an imputer.
     And also need to define numeric and categorical processing.
 """
-def condition_test(data: dict):
-    mask = pd.isnull(data['X'][:, data['idxes']]).sum(axis=0) == 0
-    idxes = np.array(data['idxes'])
-    print(idxes)
-    passed, failed = idxes[mask], idxes[~mask]
-    ##
-    if len(failed) != 0:
-        return passed, failed
-    else:
-        return passed, None
-
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         X, idxes = self.detect_category(X)
 
-        # test
-        test = Node(name='test', model=StandardScaler())
-        test.data = dict(X=X, idxes=idxes['num'])
-        passed = test.get_output(condition_test)
-        print(passed)
-        # test
-
-        self.num_pro = [('num_trans', self.transformers['num_trans'], idxes['num'])]
-        self.cat_pro = [('cat_trans', self.transformers['cat_trans'], idxes['cat'])] 
+        self.num_pro = [('num_trans', self.transformers['num'], idxes['num'])]
+        self.cat_pro = [('cat_trans', self.transformers['cat'], idxes['cat'])] 
 
         self.assigned_transformers = self.get_assigned_transformers(idxes)
 
         super().fit(X)
+
+        return self
