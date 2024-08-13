@@ -52,6 +52,7 @@ from mlflow.models import infer_signature, infer_pip_requirements
 # others
 import pickle, uuid
 from sklearn.base import BaseEstimator, TransformerMixin
+from typing import Callable
 
 # UDF: prepare data to train model
 def prepare_data_to_train(path: str) -> dict:
@@ -122,25 +123,57 @@ def dump_model(model, path: str) -> None:
     with open(path, 'wb') as output:
         pickle.dump(obj=model, file=output)
 
-#
+# class: Node
 """
-We need an entrance test at each node 
 """
-class Node():
-    def __init__(self, name: str, model) -> None:
-        self.name = name
-        self.model = model
-        self.data: dict
-        self.next: Node = None
-    ##
-    def get_output(self, output_test):
-        passed, failed = output_test(self.data)
-        passed = [(self.name, self.model, passed)]
+class Node:
+    def __init__(self, name, model) -> None:
+        self.name, self.model = name, model
+        self.data, self.next = dict(idxes=[]), None
+        self.test: Callable[[dict], tuple[list, list]]
+
+    def validate(self):
+        passed, failed = self.test(self.data)
         ###
         if self.next != None:
-            self.next.data['failed'] = failed
+            self.next.data.update({'idxes': failed, 
+                                'X': self.data['X']})
+        ###
+        if len(passed) != 0:
+            return [(self.name, self.model, passed)]
+        else:
+            return []
         
+# class: InitBinaryTree
+class InitBinaryTree():
+    def __init__(self, left: list, right: list) -> None:
+        self.left = left
+        self.right = right
+
+    def invoke_validation_of_branch(self, nodes: list, passed: dict) -> dict:
+        num_iters, i = len(nodes), 0
+        signal = len(nodes[i].data['idxes'])
+
+        while signal != 0:
+            passed[nodes[i].name] = nodes[i].validate()
+
+            i += 1
+            ## the bug is here
+            if i < num_iters: 
+                signal = len(nodes[i].data['idxes'])
+            else:
+                break
+
         return passed
+    
+    def validate(self):
+        passed = dict()
+        self.invoke_validation_of_branch(self.left, passed)
+        self.invoke_validation_of_branch(self.right, passed)
+        ##
+        results = [result[0] for result in passed.values() if len(result) != 0]
+
+        return results
 
 # UDC: base customized transformer for sequatial feature selection task
 class FSBaseTransformer(BaseEstimator, TransformerMixin):
