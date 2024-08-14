@@ -31,7 +31,7 @@ from imblearn.combine import SMOTEENN, SMOTETomek
 from mlxtend.feature_selection import SequentialFeatureSelector
 
 # pipeline
-from imblearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline, make_pipeline
 
 # non-ensample algorithms
 from sklearn.linear_model import LogisticRegression
@@ -66,7 +66,7 @@ def prepare_data_to_train(path: str) -> dict:
     
     return materials
 
-# UDF: load base model
+# UDF: load base models
 def load_base_models() -> list:
     base_models = []
     base_models.append(('LR', LogisticRegression(n_jobs=-1)))
@@ -80,6 +80,16 @@ def load_base_models() -> list:
     base_models.append(('XGB', XGBClassifier(n_jobs=-1)))
 
     return base_models
+
+# UDF: load resamplers
+def load_resammplers() -> list:
+    resamplers = []
+    resamplers.append(('ROS', RandomOverSampler()))
+    resamplers.append(('SMOTE', SMOTE(sampling_strategy='minority')))
+    resamplers.append(('SMOTEENN', SMOTEENN(enn=EditedNearestNeighbours(sampling_strategy='majority'))))
+    resamplers.append(('SMOTETomek', SMOTETomek(tomek=TomekLinks(sampling_strategy='majority'))))
+
+    return resamplers
 
 # UDF: get selected models
 def get_seleted_models(names: list) -> list:
