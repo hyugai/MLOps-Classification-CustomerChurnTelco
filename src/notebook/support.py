@@ -169,7 +169,7 @@ class InitBinaryTree():
             passed[nodes[i].name] = nodes[i].validate()
 
             i += 1
-            ## the bug is here
+            ### the bug is here
             if i < num_iters: 
                 signal = len(nodes[i].data['idxes'])
             else:
