@@ -125,31 +125,42 @@ def dump_model(model, path: str) -> None:
 
 # class: Node
 """
+Each node will represent as the validation test for a specific type transformer to select all or just a subset of the input features.
+To invoke the validation test, each node will need 4 paramaters inlcluding 'name', 'model', 'test' and 'data'. The last one can be passed later in another class.
+When the test finished, we'll have 2 output including passed features and failed ones (as indexs). In case of complex sequential nodes, the failed ones will be passed to the next node repeatedly.
+Only pass failed features' indexes when the next is available.
+Only return empty list for the passed one when there is no feature getting through the test.
 """
 class Node:
     def __init__(self, name, model) -> None:
         self.name, self.model = name, model
         self.data, self.next = dict(idxes=[]), None
         self.test: Callable[[dict], tuple[list, list]]
-
+    ##
     def validate(self):
         passed, failed = self.test(self.data)
-        ###
+        ### check if we should pass the failed ones to the next node.
         if self.next != None:
             self.next.data.update({'idxes': failed, 
                                 'X': self.data['X']})
-        ###
+        ### check if any feature passed the test to decide if return the empty list or not. 
         if len(passed) != 0:
             return [(self.name, self.model, passed)]
         else:
             return []
         
 # class: InitBinaryTree
+"""
+This tree play the vital role as the glue to connect all the separate or partially separate nodes into 2 branch which is the numeric branch and categorial one.
+When being initialized, it will take a list of node for mumeric branch, similar for the categorical one.
+It also play the role as third party to pass data to the first node of each branch by approach those nodes (as properties) through this class.
+Each parent branch will be invoked separately to prevent nodes from being overriden.
+"""
 class InitBinaryTree():
     def __init__(self, left: list, right: list) -> None:
         self.left = left
         self.right = right
-
+    ## we will take a specific info from data of each node as signal to decide if we should invoke the node, that is the number of indexes existing in each node waiting to be validated. If they present, the tree will capture the singnal and invoke the node, otherwise the execution will be terminated.
     def invoke_validation_of_branch(self, nodes: list, passed: dict) -> dict:
         num_iters, i = len(nodes), 0
         signal = len(nodes[i].data['idxes'])
@@ -165,12 +176,12 @@ class InitBinaryTree():
                 break
 
         return passed
-    
+    ##
     def validate(self):
         passed = dict()
         self.invoke_validation_of_branch(self.left, passed)
         self.invoke_validation_of_branch(self.right, passed)
-        ##
+        ### filter out the empty results, make it eligible to become the input of class ColumnTrasnformer
         results = [result[0] for result in passed.values() if len(result) != 0]
 
         return results
@@ -178,8 +189,8 @@ class InitBinaryTree():
 # UDC: base customized transformer for sequatial feature selection task
 class FSBaseTransformer(BaseEstimator, TransformerMixin):
     ##
-    def __init__(self, transformers: dict) -> None:
-        self.transformers = transformers
+    def __init__(self,tree: InitBinaryTree) -> None:
+        self.tree = tree
 
         return None
     ##
@@ -204,14 +215,6 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
         return X, idxes
     ##
-    def get_assigned_transformers(self, idxes: dict) -> list:
-        if len(idxes['cat']) == 0:
-            return self.num_pro
-        elif len(idxes['num']) == 0:
-            return self.cat_pro 
-        else:
-            return self.num_pro + self.cat_pro
-    ##
     def fit(self, X: np.ndarray, y=None):
         self.ct = ColumnTransformer(self.assigned_transformers, remainder='passthrough')\
             .fit(X)
@@ -223,19 +226,16 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
         return self.ct.transform(X)
 
-# 
+#  class: SFS
 """
-This class will take care of columns having missing values with an imputer.
-    And also need to define numeric and categorical processing.
 """
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         X, idxes = self.detect_category(X)
 
-        self.num_pro = [('num_trans', self.transformers['num'], idxes['num'])]
-        self.cat_pro = [('cat_trans', self.transformers['cat'], idxes['cat'])] 
-
-        self.assigned_transformers = self.get_assigned_transformers(idxes)
+        self.tree.left[0].data.update({'X': X, 'idxes': idxes['num']})
+        self.tree.right[0].data.update({'X': X, 'idxes': idxes['cat']})
+        self.assigned_transformers = self.tree.validate()
 
         super().fit(X)
 
