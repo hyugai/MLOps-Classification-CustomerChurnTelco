@@ -1,0 +1,28 @@
+artifact_path: model
+flavors:
+  python_function:
+    artifacts:
+      feature_selector:
+        path: artifacts/si(mean)_std_ohe.pkl
+        uri: ../cache/notebook/si(mean)_std_ohe.pkl
+      model:
+        path: artifacts/84d57e2b-d131-4269-965e-e077f225aca0.pkl
+        uri: ../cache/notebook/84d57e2b-d131-4269-965e-e077f225aca0.pkl
+    cloudpickle_version: 3.0.0
+    code: null
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pyfunc.model
+    python_model: python_model.pkl
+    python_version: 3.11.9
+    streamable: false
+mlflow_version: 2.14.3
+model_size_bytes: 226732
+model_uuid: 93b359993de54182a1715ede989d69f1
+run_id: 672bb6ba64bf464fa2762c22efcd6e60
+signature:
+  inputs: '[{"type": "tensor", "tensor-spec": {"dtype": "object", "shape": [-1, 19]}}]'
+  outputs: null
+  params: null
+utc_time_created: '2024-08-14 03:56:45.156897'
