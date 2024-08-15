@@ -10,7 +10,7 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold, cross_val_score
 
 # metrics
-from sklearn.metrics import fbeta_score, make_scorer, classification_report
+from sklearn.metrics import fbeta_score, make_scorer, classification_report, confusion_matrix
 
 # preprocessing
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
