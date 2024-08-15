@@ -129,11 +129,10 @@ def plot_kfold_results(kfold_results: dict, title: str=None):
     plt.show()
 
 # UDF: dump model
+"""
+Due to functions as input in the 'Node' class, we will need the 'cloudpickle' module to de(serialize) the function.
+"""
 def dump_model(model, path: str) -> None:
-    with open(path, 'wb') as output:
-        pickle.dump(obj=model, file=output)
-
-def test_dump_model(model, path: str) -> None:
     with open(path, 'wb') as output:
         cloudpickle.dump(obj=model, file=output)
 
