@@ -2,7 +2,7 @@
 from mlflow.pyfunc import PythonModel
 
 # others
-import joblib, pickle, cloudpickle
+import cloudpickle
 
 ## customized model for mlflow
 class MLflowModel(PythonModel):

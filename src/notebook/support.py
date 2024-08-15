@@ -50,8 +50,8 @@ import mlflow
 from mlflow.models import infer_signature, infer_pip_requirements
 
 # others
-import pickle, cloudpickle, uuid
-from sklearn.base import BaseEstimator, TransformerMixin
+import cloudpickle, uuid
+from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
 from typing import Callable
 
 # UDF: prepare data to train model
