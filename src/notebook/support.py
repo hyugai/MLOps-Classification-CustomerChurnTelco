@@ -50,7 +50,7 @@ import mlflow
 from mlflow.models import infer_signature, infer_pip_requirements
 
 # others
-import pickle, uuid
+import pickle, cloudpickle, uuid
 from sklearn.base import BaseEstimator, TransformerMixin
 from typing import Callable
 
@@ -132,6 +132,10 @@ def plot_kfold_results(kfold_results: dict, title: str=None):
 def dump_model(model, path: str) -> None:
     with open(path, 'wb') as output:
         pickle.dump(obj=model, file=output)
+
+def test_dump_model(model, path: str) -> None:
+    with open(path, 'wb') as output:
+        cloudpickle.dump(obj=model, file=output)
 
 # class: Node
 """

@@ -8,10 +8,7 @@ from prefect.flows import flow
 from prefect.tasks import task
 
 # data wrangling
-def load_raw_data(path: str) -> dict[pd.DataFrame]:
+def prepare_data(path: str) -> dict[pd.DataFrame]:
     materials = {'df': pd.read_csv(path)}
 
-    return materials
-
-def quality_testing(materials: dict) -> dict:
     return materials

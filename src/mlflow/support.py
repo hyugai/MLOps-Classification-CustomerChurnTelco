@@ -2,7 +2,7 @@
 from mlflow.pyfunc import PythonModel
 
 # others
-import joblib
+import joblib, pickle, cloudpickle
 
 ## customized model for mlflow
 class MLflowModel(PythonModel):
@@ -11,8 +11,10 @@ class MLflowModel(PythonModel):
         self.FeatureSelector = None    
 
     def load_context(self, context):
-        self.model = joblib.load(context.artifacts['model'])
-        self.FeatureSelector = joblib.load(context.artifacts['feature_selector'])
+        with open(context.artifacts['model'], 'rb') as f:
+            self.model = cloudpickle.load(f)
+        with open(context.artifacts['feature_selector'], 'rb') as f:
+            self.FeatureSelector = cloudpickle.load(f)
 
     def predict(self, context, model_input, params=None):
         params = params or {'predict_method': 'predict'}
