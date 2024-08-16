@@ -243,7 +243,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 """
 Child class of 'FSBaseTransformer'
 """
-class FSTransformer(FSBaseTransformer):
+class SFSTransformer(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         X, idxes = self.detect_category(X)
 
