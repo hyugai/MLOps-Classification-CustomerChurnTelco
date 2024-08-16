@@ -1,0 +1,28 @@
+artifact_path: model
+flavors:
+  python_function:
+    artifacts:
+      feature_selector:
+        path: artifacts/feature_selector.pkl
+        uri: ../cache/temp/feature_selector.pkl
+      model:
+        path: artifacts/model.pkl
+        uri: ../cache/temp/model.pkl
+    cloudpickle_version: 3.0.0
+    code: null
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pyfunc.model
+    python_model: python_model.pkl
+    python_version: 3.11.9
+    streamable: false
+mlflow_version: 2.14.3
+model_size_bytes: 435578
+model_uuid: 0808e572c0c64eaaa1eb808939c05bca
+run_id: ad63800a9e4244cbb314bca3ee4c5af1
+signature:
+  inputs: '[{"type": "tensor", "tensor-spec": {"dtype": "object", "shape": [-1, 19]}}]'
+  outputs: null
+  params: null
+utc_time_created: '2024-08-16 06:35:51.762517'
