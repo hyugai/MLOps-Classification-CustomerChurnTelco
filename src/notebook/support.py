@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # model selection
-from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold, cross_val_score
+from sklearn.model_selection import train_test_split, RepeatedStratifiedKFold, StratifiedKFold, cross_val_score
 
 # metrics
 from sklearn.metrics import fbeta_score, make_scorer, classification_report, confusion_matrix
@@ -243,7 +243,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 """
 Child class of 'FSBaseTransformer'
 """
-class SFS(FSBaseTransformer):
+class FSTransformer(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
         X, idxes = self.detect_category(X)
 
@@ -256,20 +256,21 @@ class SFS(FSBaseTransformer):
         return self
     
 # class: FSBaseClassifier
-class FSBaseClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, feature_selector: SFS, model) -> None:
-        self.feature_selector = feature_selector
-        self.model = model
+# class FSBaseClassifier(BaseEstimator, ClassifierMixin):
+#     def __init__(self, feature_selector: SequentialFeatureSelector, model) -> None:
+#         self.feature_selector = feature_selector
+#         self.model = model
+#         super().__init__()
 
-        return None
-    ## 
-    def fit(self, X: np.ndarray, y: np.ndarray):
-        selected_X = self.feature_selector.transform(X)
-        self.model.fit(selected_X, y)
+#     ## 
+#     def fit(self, X: np.ndarray, y: np.ndarray):
+#         print(self.feature_selector.fitted)
+#         selected_X = self.feature_selector.transform(X)
+#         self.model.fit(selected_X, y)
 
-        return self
-    ## 
-    def predict(self, X: np.ndarray, y=None) -> np.ndarray:
-        selected_X = self.feature_selector.transform(X)
+#         return self
+#     ## 
+#     def predict(self, X: np.ndarray, y=None) -> np.ndarray:
+#         selected_X = self.feature_selector.transform(X)
 
-        return self.model.predict(selected_X)
+#         return self.model.predict(selected_X)
