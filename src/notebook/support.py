@@ -241,6 +241,7 @@ class FSBaseTransformer(BaseEstimator, TransformerMixin):
 
 #  class: SFS
 """
+Child class of 'FSBaseTransformer'
 """
 class SFS(FSBaseTransformer):
     def fit(self, X: np.ndarray, y=None):
@@ -253,3 +254,22 @@ class SFS(FSBaseTransformer):
         super().fit(X)
 
         return self
+    
+# class: FSBaseClassifier
+class FSBaseClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, feature_selector: SFS, model) -> None:
+        self.feature_selector = feature_selector
+        self.model = model
+
+        return None
+    ## 
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        selected_X = self.feature_selector.transform(X)
+        self.model.fit(selected_X, y)
+
+        return self
+    ## 
+    def predict(self, X: np.ndarray, y=None) -> np.ndarray:
+        selected_X = self.feature_selector.transform(X)
+
+        return self.model.predict(selected_X)
