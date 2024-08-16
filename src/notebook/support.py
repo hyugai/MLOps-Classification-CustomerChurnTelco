@@ -256,21 +256,23 @@ class FSTransformer(FSBaseTransformer):
         return self
     
 # class: FSBaseClassifier
-# class FSBaseClassifier(BaseEstimator, ClassifierMixin):
-#     def __init__(self, feature_selector: SequentialFeatureSelector, model) -> None:
-#         self.feature_selector = feature_selector
-#         self.model = model
-#         super().__init__()
+class FSBaseClassifier(BaseEstimator, ClassifierMixin):
+    ## the bug is here
+    def __init__(self, path: dict) -> None:
+        self.path = path
+        with open(path['feature_selector'], 'rb') as f:
+            self.feature_selector = cloudpickle.load(f)
+        with open(path['model'], 'rb') as f:
+            self.model = cloudpickle.load(f)
 
-#     ## 
-#     def fit(self, X: np.ndarray, y: np.ndarray):
-#         print(self.feature_selector.fitted)
-#         selected_X = self.feature_selector.transform(X)
-#         self.model.fit(selected_X, y)
+    ## 
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        selected_X = self.feature_selector.transform(X)
+        self.model.fit(selected_X, y)
 
-#         return self
-#     ## 
-#     def predict(self, X: np.ndarray, y=None) -> np.ndarray:
-#         selected_X = self.feature_selector.transform(X)
+        return self
+    ## 
+    def predict(self, X: np.ndarray, y=None) -> np.ndarray:
+        selected_X = self.feature_selector.transform(X)
 
-#         return self.model.predict(selected_X)
+        return self.model.predict(selected_X)
