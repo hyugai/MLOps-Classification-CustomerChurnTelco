@@ -49,6 +49,9 @@ from sklearn.ensemble import StackingClassifier
 import mlflow
 from mlflow.models import infer_signature, infer_pip_requirements
 
+# hyper-parameters tuning
+import optuna
+
 # others
 import cloudpickle, uuid
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
